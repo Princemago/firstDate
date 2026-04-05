@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Binondo Date Planner | Itinerary Receipt</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --rose: #ff4d6d;
+  --rose-light: #ff8fa3;
+  --rose-pale: #ffb6c1;
+  --blush: #ffe6eb;
+  --blush-mid: #fff0f5;
+  --white: #ffffff;
+  --text: #3d1a24;
+  --text-soft: #9b6672;
+  --shadow: rgba(255, 77, 109, 0.18);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--blush);
+  font-family: 'DM Sans', sans-serif;
+  overflow: hidden;
+  color: var(--text);
+}
+
+.wrapper, .scene, .next-scene {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@keyframes float {
+  0%,100% { transform: translate(-50%, -50%) translateY(0); }
+  50% { transform: translate(-50%, -50%) translateY(-10px); }
+}
+
+.wrapper {
+  width: 300px;
+  height: 200px;
+  animation: float 3s ease-in-out infinite;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.envelope {
+  width: 100%;
+  height: 100%;
+  background: var(--rose-pale);
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 0 8px 30px var(--shadow);
+  overflow: visible;
+}
+
+.flap {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: var(--rose-light);
+  clip-path: polygon(0 0, 100% 0, 50% 55%);
+  transform-origin: top center;
+  transform: rotateX(0deg);
+  transition: transform 1s cubic-bezier(0.65, 0, 0.35, 1);
+  z-index: 4;
+}
+
+.sticker {
+  position: absolute;
+  width: 64px; height: 64px;
+  background: white;
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--rose);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 14px var(--shadow);
+  z-index: 5;
+  font-family: 'Playfair Display', serif;
+}
+
+.wrapper.open .flap { transform: rotateX(-130deg); }
+
+/* Scene 1 */
+.scene {
+  width: 900px; height: 520px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px var(--shadow);
+  display: flex;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.scene.show { opacity: 1; pointer-events: auto; }
+
+.scene-left { flex: 1; }
+.scene-left img { width: 100%; height: 100%; object-fit: cover; }
+
+.scene-right {
+  flex: 1;
+  padding: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.scene-right h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 26px; font-weight: 700;
+  margin: 0 0 14px;
+  color: var(--rose);
+}
+.scene-right p {
+  margin: 5px 0;
+  font-size: 14.5px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+.scene-right label {
+  margin: 18px 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--rose);
+  display: block;
+}
+.scene-right select, .scene-right input[type="date"] {
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid var(--rose-pale);
+  background: var(--blush-mid);
+  margin-bottom: 22px;
+  font-size: 15px;
+  color: var(--rose);
+  font-family: 'DM Sans', sans-serif;
+  width: 100%;
+  outline: none;
+  cursor: pointer;
+}
+.scene-right select:focus, .scene-right input[type="date"]:focus { border-color: var(--rose); }
+.scene-right input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.4) sepia(1) saturate(5) hue-rotate(320deg);
+  cursor: pointer;
+}
+
+.btn-primary {
+  padding: 13px 28px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--rose) 0%, #ff2d55 100%);
+  color: white;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.3px;
+  box-shadow: 0 6px 20px rgba(255,77,109,0.4);
+  transition: all 0.25s ease;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,77,109,0.5); }
+.btn-primary:active { transform: scale(0.97); }
+
+/* Carousel scenes */
+.next-scene {
+  width: 1100px; height: 560px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px var(--shadow);
+  display: flex;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.8s ease;
+}
+.next-scene.show { opacity: 1; pointer-events: auto; }
+
+.next-left {
+  flex: 0 0 480px;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.carousel-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #f8e8ed;
+}
+
+.carousel-slide {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.carousel-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  opacity: 0;
+  position: absolute;
+  top: 0; left: 0;
+  transition: opacity 0.65s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+  pointer-events: none;
+}
+.carousel-slide img.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.carousel-controls {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  padding: 0 12px;
+  z-index: 10;
+  pointer-events: none;
+}
+.carousel-controls button {
+  background: rgba(255,255,255,0.9);
+  border: none;
+  width: 38px; height: 38px;
+  color: var(--rose);
+  font-size: 18px;
+  border-radius: 50%;
+  cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: bold;
+}
+.carousel-controls button:hover { background: white; transform: scale(1.1); }
+
+.next-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 36px 36px 80px;
+  position: relative;
+  overflow-y: auto;
+}
+.next-right h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 24px;
+  color: var(--rose);
+  margin: 0 0 10px;
+}
+.next-right > p {
+  margin: 5px 0;
+  font-size: 14.5px;
+  color: var(--text-soft);
+}
+
+/* Pinned nav footer */
+.nav-footer {
+  position: absolute;
+  bottom: 24px; left: 36px; right: 36px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.arrow-btn {
+  width: 46px; height: 46px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--rose) 0%, #ff2d55 100%);
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(255,77,109,0.4);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+.arrow-btn:hover { transform: scale(1.12); box-shadow: 0 8px 24px rgba(255,77,109,0.55); }
+.arrow-btn:active { transform: scale(0.95); }
+
+/* Itinerary selection styles */
+#binondoItineraryScene .next-right {
+  padding: 24px 28px 90px;
+  gap: 0;
+}
+
+#binondoItineraryScene h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 21px;
+  color: var(--rose);
+  margin: 0 0 14px;
+}
+
+.itinerary-section { margin-bottom: 12px; }
+
+.itinerary-category {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.3px;
+  color: var(--rose);
+  margin-bottom: 7px;
+}
+.itinerary-category::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rose-pale);
+}
+
+.chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.itinerary-checkbox input[type="checkbox"] { display: none; }
+
+.itinerary-checkbox label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 13px;
+  border-radius: 50px;
+  background: var(--blush);
+  color: var(--rose);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.22s ease;
+  border: 1.5px solid var(--rose-pale);
+  user-select: none;
+  white-space: nowrap;
+}
+.itinerary-checkbox label::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--rose-pale);
+  transition: background 0.22s ease;
+  flex-shrink: 0;
+}
+.itinerary-checkbox input[type="checkbox"]:checked + label {
+  background: linear-gradient(135deg, var(--rose) 0%, #ff2d55 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(255,77,109,0.35);
+}
+.itinerary-checkbox input[type="checkbox"]:checked + label::before {
+  background: rgba(255,255,255,0.55);
+}
+
+.confirm-btn-wrap {
+  position: absolute;
+  bottom: 20px; left: 28px; right: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 13px 20px;
+  border: none;
+  border-radius: 50px;
+  background: linear-gradient(135deg, var(--rose) 0%, #ff2d55 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'DM Sans', sans-serif;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255,77,109,0.4);
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.confirm-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(255,77,109,0.5); }
+.confirm-btn:active { transform: scale(0.97); }
+
+/* ========== RECEIPT STYLES (Long receipt look) ========== */
+.receipt-scene {
+  width: 520px;
+  max-height: 85vh;
+  background: #fffef7;
+  border-radius: 0;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 200;
+  font-family: 'DM Sans', monospace;
+}
+.receipt-scene.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+.receipt-header {
+  background: #2d2d2d;
+  padding: 20px 24px;
+  color: #f5e6d3;
+  text-align: center;
+  border-bottom: 2px dashed #ffb6c1;
+}
+.receipt-header h2 {
+  margin: 0;
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+}
+.receipt-header p {
+  margin: 6px 0 0;
+  font-size: 11px;
+  opacity: 0.8;
+  font-family: monospace;
+}
+.receipt-body {
+  flex: 1;
+  padding: 24px 28px;
+  overflow-y: auto;
+  background: #fffef7;
+  font-size: 13px;
+}
+.receipt-line {
+  border-top: 1px dashed #ccc;
+  margin: 16px 0;
+}
+.receipt-section {
+  margin-bottom: 20px;
+}
+.receipt-section-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--rose);
+  letter-spacing: 1px;
+  border-left: 3px solid var(--rose);
+  padding-left: 10px;
+  margin: 12px 0 10px;
+  font-family: 'DM Sans', sans-serif;
+}
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  padding: 2px 0;
+}
+.receipt-label {
+  color: #6b4e5a;
+  font-weight: 500;
+}
+.receipt-value {
+  color: #2d2d2d;
+  font-weight: 500;
+  text-align: right;
+  max-width: 60%;
+}
+.food-receipt-item {
+  display: inline-block;
+  background: #ffe6eb;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin: 3px 4px;
+  font-size: 11px;
+  color: var(--rose);
+}
+.food-category-receipt {
+  margin: 12px 0 6px;
+  font-weight: 700;
+  color: #a55c6e;
+  font-size: 12px;
+}
+.receipt-total {
+  margin-top: 20px;
+  padding-top: 12px;
+  border-top: 2px dashed #ffb6c1;
+  text-align: center;
+  font-size: 11px;
+  color: #9b6672;
+}
+.receipt-footer {
+  background: #2d2d2d;
+  padding: 16px;
+  text-align: center;
+  color: #f5e6d3;
+  font-size: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+.receipt-footer button {
+  background: #ff4d6d;
+  border: none;
+  color: white;
+  padding: 8px 20px;
+  border-radius: 40px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 12px;
+  transition: 0.2s;
+}
+.receipt-footer button:hover { background: #ff2d55; transform: scale(1.02); }
+.receipt-footer .close-receipt {
+  background: #5a3e48;
+}
+.receipt-footer .close-receipt:hover { background: #3d2a30; }
+
+@media print {
+  body * { visibility: hidden; }
+  .receipt-scene, .receipt-scene * { visibility: visible; }
+  .receipt-scene { position: absolute; top: 0; left: 0; transform: none; width: 100%; border-radius: 0; box-shadow: none; }
+}
+
+/* scrollbar */
+.next-right::-webkit-scrollbar, .receipt-body::-webkit-scrollbar { width: 5px; }
+.next-right::-webkit-scrollbar-track { background: var(--blush); border-radius: 10px; }
+.next-right::-webkit-scrollbar-thumb { background: var(--rose-pale); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- Envelope -->
+<div class="wrapper" id="wrapper" onclick="openEnvelope()">
+  <div class="envelope">
+    <div class="flap"></div>
+    <div class="sticker">Open</div>
+  </div>
+</div>
+
+<!-- Scene 1: Meeting point -->
+<div class="scene" id="scene1">
+  <div class="scene-left"><img src="market.jpg" alt="Market Market"></div>
+  <div class="scene-right">
+    <h2>Meeting at Market! Market!</h2>
+    <p>📍 Market! Market! Shopping Mall, Newport City, Pasay, Metro Manila</p>
+    <p>Suggestion: Take Angkas or Grab to prevent getting lost 😝</p>
+    <label>📅 Pick a Date</label>
+    <input type="date" id="meetingDate" value="2026-04-18">
+    <label>⏰ Choose Time</label>
+    <select id="time">
+      <option>7:00 AM</option><option>8:00 AM</option><option>9:00 AM</option>
+      <option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option>
+      <option>1:00 PM</option><option>2:00 PM</option><option>3:00 PM</option>
+      <option>4:00 PM</option><option>5:00 PM</option><option>6:00 PM</option>
+      <option>7:00 PM</option>
+    </select>
+    <button class="btn-primary" onclick="confirmDateTime()">Confirm Date & Time ✓</button>
+  </div>
+</div>
+
+<!-- Fine Arts Museum -->
+<div class="next-scene" id="fineArtsScene">
+  <div class="next-left"><div class="carousel-container" data-auto="true"><div class="carousel-slide"><img src="fine1.jpeg" class="active" alt="Fine Art 1"><img src="fine2.jpg" alt="Fine Art 2"><img src="fine3.jpg" alt="Fine Art 3"></div><div class="carousel-controls"><button class="prev">&#10094;</button><button class="next">&#10095;</button></div></div></div>
+  <div class="next-right"><h2>National Museum of Fine Arts</h2><p>📅 Date: <b id="chosenDateDisplay"></b> &nbsp;| ⏰ Time: <b id="chosenTimeFineArts"></b></p><p>Location: Manila</p><div class="nav-footer"><span></span><button class="arrow-btn" onclick="goToNaturalHistory()">&#10140;</button></div></div>
+</div>
+
+<!-- Natural History -->
+<div class="next-scene" id="naturalHistoryScene">
+  <div class="next-left"><div class="carousel-container" data-auto="true"><div class="carousel-slide"><img src="natural1.jpg" class="active" alt="Natural History 1"><img src="natural2.jpg" alt="Natural History 2"><img src="natural3.jpg" alt="Natural History 3"></div><div class="carousel-controls"><button class="prev">&#10094;</button><button class="next">&#10095;</button></div></div></div>
+  <div class="next-right"><h2>National Museum of Natural History</h2><p>📅 Date: <b id="chosenDateDisplay2"></b> &nbsp;| ⏰ Time: <b id="chosenTimeNatural"></b></p><p>Location: Manila</p><div class="nav-footer"><button class="arrow-btn" onclick="backToFineArts()">&#8592;</button><button class="arrow-btn" onclick="goToAnthropology()">&#10140;</button></div></div>
+</div>
+
+<!-- Anthropology -->
+<div class="next-scene" id="anthroScene">
+  <div class="next-left"><div class="carousel-container" data-auto="true"><div class="carousel-slide"><img src="anthro1.jpg" class="active" alt="Anthropology 1"><img src="anthro2.jpg" alt="Anthropology 2"><img src="anthro3.jpg" alt="Anthropology 3"></div><div class="carousel-controls"><button class="prev">&#10094;</button><button class="next">&#10095;</button></div></div></div>
+  <div class="next-right"><h2>National Museum of Anthropology</h2><p>📅 Date: <b id="chosenDateDisplay3"></b> &nbsp;| ⏰ Time: <b id="chosenTimeAnthro"></b></p><p>Location: Manila</p><div class="nav-footer"><button class="arrow-btn" onclick="backToNaturalHistory()">&#8592;</button><button class="arrow-btn" onclick="goToBinondo()">&#10140;</button></div></div>
+</div>
+
+<!-- Binondo -->
+<div class="next-scene" id="binondoScene">
+  <div class="next-left"><div class="carousel-container" data-auto="true"><div class="carousel-slide"><img src="binondo1.jpg" class="active" alt="Binondo 1"><img src="binondo2.jpg" alt="Binondo 2"><img src="binondo3.jpg" alt="Binondo 3"></div><div class="carousel-controls"><button class="prev">&#10094;</button><button class="next">&#10095;</button></div></div></div>
+  <div class="next-right"><h2>Binondo, Chinatown Manila</h2><p>📅 Date: <b id="chosenDateDisplay4"></b> &nbsp;| ⏰ Time: <b id="chosenTimeBinondo"></b></p><p>Location: Manila</p><div class="nav-footer"><button class="arrow-btn" onclick="backToAnthropology()">&#8592;</button><button class="arrow-btn" onclick="goToItinerary()">&#10140;</button></div></div>
+</div>
+
+<!-- Binondo Itinerary Selection -->
+<div class="next-scene" id="binondoItineraryScene">
+  <div class="next-left"><img src="binondo_map.jpg" alt="Binondo Map"></div>
+  <div class="next-right">
+    <h2>Binondo Itinerary Planner</h2>
+    <form id="itineraryForm">
+      <div class="itinerary-section"><div class="itinerary-category">🥟 Appetizers</div><div class="chips-row"><div class="itinerary-checkbox"><input type="checkbox" id="vege" value="Vege Select"><label for="vege">Vege Select</label></div><div class="itinerary-checkbox"><input type="checkbox" id="binondoBites" value="Binondo Bites"><label for="binondoBites">Binondo Bites</label></div><div class="itinerary-checkbox"><input type="checkbox" id="dongBei" value="Dong Bei Dumplings"><label for="dongBei">Dong Bei Dumplings</label></div><div class="itinerary-checkbox"><input type="checkbox" id="shanghai" value="Shanghai Fried Siopao"><label for="shanghai">Shanghai Fried Siopao</label></div></div></div>
+      <div class="itinerary-section"><div class="itinerary-category">🍜 Resto</div><div class="chips-row"><div class="itinerary-checkbox"><input type="checkbox" id="chuanKee" value="Chuan Kee Chinese"><label for="chuanKee">Chuan Kee Chinese</label></div><div class="itinerary-checkbox"><input type="checkbox" id="sincerity" value="Sincerity"><label for="sincerity">Sincerity</label></div><div class="itinerary-checkbox"><input type="checkbox" id="waiYing" value="Wai Ying Fast Food"><label for="waiYing">Wai Ying Fast Food</label></div></div></div>
+      <div class="itinerary-section"><div class="itinerary-category">🧃 Refreshers</div><div class="chips-row"><div class="itinerary-checkbox"><input type="checkbox" id="wongkei" value="Wongkei"><label for="wongkei">Wongkei</label></div><div class="itinerary-checkbox"><input type="checkbox" id="dragonFruit" value="Dragon Fruit Drink"><label for="dragonFruit">Dragon Fruit Drink</label></div><div class="itinerary-checkbox"><input type="checkbox" id="magicWater" value="Magic Water"><label for="magicWater">Magic Water</label></div></div></div>
+      <div class="itinerary-section"><div class="itinerary-category">🧁 Desserts</div><div class="chips-row"><div class="itinerary-checkbox"><input type="checkbox" id="mochy" value="Mochy Puff"><label for="mochy">Mochy Puff</label></div><div class="itinerary-checkbox"><input type="checkbox" id="oshiekun" value="Oshiekun"><label for="oshiekun">Oshiekun</label></div><div class="itinerary-checkbox"><input type="checkbox" id="lordStows" value="Lord Stow's"><label for="lordStows">Lord Stow's</label></div><div class="itinerary-checkbox"><input type="checkbox" id="kokee" value="Kokee Bakery"><label for="kokee">Kokee Bakery</label></div></div></div>
+      <div class="itinerary-section"><div class="itinerary-category">☕ Coffee Shops</div><div class="chips-row"><div class="itinerary-checkbox"><input type="checkbox" id="beanstro" value="Beanstro Coffee Shop"><label for="beanstro">Beanstro Coffee Shop</label></div><div class="itinerary-checkbox"><input type="checkbox" id="metluck" value="Met Luck"><label for="metluck">Met Luck</label></div><div class="itinerary-checkbox"><input type="checkbox" id="gukeng" value="Gukeng Coffee Shop"><label for="gukeng">Gukeng Coffee Shop</label></div></div></div>
+      <div class="itinerary-section"><div class="itinerary-category">🎁 Pasalubongs</div><div class="chips-row"><div class="itinerary-checkbox"><input type="checkbox" id="ehhbee" value="Ehh Bee Tin"><label for="ehhbee">Ehh Bee Tin</label></div><div class="itinerary-checkbox"><input type="checkbox" id="pollands" value="Pollands"><label for="pollands">Pollands</label></div><div class="itinerary-checkbox"><input type="checkbox" id="bakersfair" value="Baker's Fair"><label for="bakersfair">Baker's Fair</label></div></div></div>
+    </form>
+    <div class="confirm-btn-wrap"><button class="arrow-btn" onclick="backToBinondo()">&#8592;</button><button class="confirm-btn" onclick="showReceiptSummary()">🧾 &nbsp;Get Receipt & Done</button></div>
+  </div>
+</div>
+
+<!-- RECEIPT SCENE - Long receipt style -->
+<div class="receipt-scene" id="receiptScene">
+  <div class="receipt-header">
+    <h2>🧾 BINONDO DATE RECEIPT</h2>
+    <p>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</p>
+    <p>your ultimate food & culture itinerary</p>
+  </div>
+  <div class="receipt-body" id="receiptBody">
+    <!-- dynamic content -->
+  </div>
+  <div class="receipt-footer">
+    <button class="close-receipt" id="closeReceiptBtn">✖ Close</button>
+    <button id="printReceiptBtn">🖨️ Print Receipt</button>
+  </div>
+</div>
+
+<script>
+// Global variables
+let selectedDate = "2026-04-18";
+let selectedTime = "9:00 AM";
+
+function formatDate(dateString) {
+  if (!dateString) return "Not set";
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+}
+
+function openEnvelope() {
+  const wrapper = document.getElementById('wrapper');
+  wrapper.classList.add('open');
+  setTimeout(() => {
+    document.getElementById('scene1').classList.add('show');
+    wrapper.style.display = 'none';
+  }, 1000);
+}
+
+function confirmDateTime() {
+  const dateInput = document.getElementById('meetingDate');
+  const time = document.getElementById('time').value;
+  selectedDate = dateInput.value;
+  selectedTime = time;
+  const formattedDate = formatDate(selectedDate);
+  
+  const dateElements = ['chosenDateDisplay', 'chosenDateDisplay2', 'chosenDateDisplay3', 'chosenDateDisplay4'];
+  dateElements.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = formattedDate; });
+  const timeElements = ['chosenTimeFineArts','chosenTimeNatural','chosenTimeAnthro','chosenTimeBinondo'];
+  timeElements.forEach(id => { if(document.getElementById(id)) document.getElementById(id).textContent = time; });
+  
+  document.getElementById('scene1').classList.remove('show');
+  document.getElementById('fineArtsScene').classList.add('show');
+}
+
+function goToNaturalHistory() { switchScene('fineArtsScene','naturalHistoryScene'); }
+function backToFineArts() { switchScene('naturalHistoryScene','fineArtsScene'); }
+function goToAnthropology() { switchScene('naturalHistoryScene','anthroScene'); }
+function backToNaturalHistory() { switchScene('anthroScene','naturalHistoryScene'); }
+function goToBinondo() { switchScene('anthroScene','binondoScene'); }
+function backToAnthropology() { switchScene('binondoScene','anthroScene'); }
+function goToItinerary() { switchScene('binondoScene','binondoItineraryScene'); }
+function backToBinondo() { switchScene('binondoItineraryScene','binondoScene'); }
+function switchScene(hideId, showId) {
+  document.getElementById(hideId).classList.remove('show');
+  document.getElementById(showId).classList.add('show');
+}
+
+// Build receipt summary (long receipt style)
+function showReceiptSummary() {
+  const sections = document.querySelectorAll('#binondoItineraryScene .itinerary-section');
+  const categoryTitles = ["🥟 Appetizers", "🍜 Resto", "🧃 Refreshers", "🧁 Desserts", "☕ Coffee Shops", "🎁 Pasalubongs"];
+  let selectedMap = {};
+  categoryTitles.forEach(cat => selectedMap[cat] = []);
+  
+  sections.forEach((section, idx) => {
+    const checkboxesInSection = section.querySelectorAll('.itinerary-checkbox input:checked');
+    const category = categoryTitles[idx];
+    if(category) {
+      checkboxesInSection.forEach(cb => selectedMap[category].push(cb.value));
+    }
+  });
+  
+  const allSelected = Object.values(selectedMap).flat();
+  if(allSelected.length === 0) {
+    alert("✨ Please select at least one food stop before generating your receipt!");
+    return;
+  }
+  
+  const formattedDateLong = formatDate(selectedDate);
+  const now = new Date();
+  const receiptID = "BIN" + now.getFullYear() + (now.getMonth()+1) + now.getDate() + now.getHours() + now.getMinutes();
+  
+  let foodHtml = '';
+  for (let [cat, items] of Object.entries(selectedMap)) {
+    foodHtml += `<div class="food-category-receipt">${cat}</div><div style="margin-bottom: 12px;">`;
+    if(items.length) {
+      items.forEach(item => { foodHtml += `<span class="food-receipt-item">${item}</span>`; });
+    } else {
+      foodHtml += `<span style="color:#bbb; font-size:11px;">— none selected —</span>`;
+    }
+    foodHtml += `</div>`;
+  }
+  
+  const receiptContent = `
+    <div class="receipt-section">
+      <div class="receipt-row"><span class="receipt-label">RECEIPT NO.</span><span class="receipt-value">${receiptID}</span></div>
+      <div class="receipt-row"><span class="receipt-label">DATE ISSUED</span><span class="receipt-value">${formatDate(new Date().toISOString())}</span></div>
+      <div class="receipt-row"><span class="receipt-label">MEETING POINT</span><span class="receipt-value">Market! Market! Pasay</span></div>
+    </div>
+    <div class="receipt-line"></div>
+    <div class="receipt-section">
+      <div class="receipt-section-title">📅 DATE & TIME</div>
+      <div class="receipt-row"><span class="receipt-label">Event Date</span><span class="receipt-value">${formattedDateLong}</span></div>
+      <div class="receipt-row"><span class="receipt-label">Assembly Time</span><span class="receipt-value">${selectedTime}</span></div>
+    </div>
+    <div class="receipt-line"></div>
+    <div class="receipt-section">
+      <div class="receipt-section-title">🏛️ MUSEUM TOUR</div>
+      <div class="receipt-row"><span class="receipt-label">Route</span><span class="receipt-value">Fine Arts → Natural History → Anthropology → Binondo</span></div>
+      <div class="receipt-row"><span class="receipt-label">Location</span><span class="receipt-value">Manila (National Museums Complex)</span></div>
+    </div>
+    <div class="receipt-line"></div>
+    <div class="receipt-section">
+      <div class="receipt-section-title">🍜 BINONDO FOOD CRAWL</div>
+      ${foodHtml}
+    </div>
+    <div class="receipt-line"></div>
+    <div class="receipt-section">
+      <div class="receipt-section-title">💝 NOTES</div>
+      <div class="receipt-row"><span class="receipt-label">✔️</span><span class="receipt-value">Wear comfy shoes & bring cash</span></div>
+      <div class="receipt-row"><span class="receipt-label">✔️</span><span class="receipt-value">Stay hydrated & take photos!</span></div>
+      <div class="receipt-row"><span class="receipt-label">✔️</span><span class="receipt-value">Oldest Chinatown in the world</span></div>
+    </div>
+    <div class="receipt-total">
+      <span>━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span><br>
+      Thank you! Enjoy your Binondo date 💕<br>
+      <span style="font-size:10px;">present this receipt for good vibes only</span>
+    </div>
+  `;
+  
+  document.getElementById('receiptBody').innerHTML = receiptContent;
+  document.getElementById('receiptScene').classList.add('show');
+}
+
+function closeReceipt() {
+  document.getElementById('receiptScene').classList.remove('show');
+}
+
+function printReceipt() {
+  const receiptContent = document.getElementById('receiptScene').cloneNode(true);
+  receiptContent.classList.add('show');
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+    <head><title>Binondo Date Receipt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { background: #fffef7; font-family: 'DM Sans', monospace; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+      .receipt-scene { width: 520px; background: #fffef7; margin: 0 auto; box-shadow: none; }
+      .receipt-header { background: #2d2d2d; padding: 20px; text-align: center; color: #f5e6d3; }
+      .receipt-body { padding: 24px 28px; }
+      .receipt-line { border-top: 1px dashed #ccc; margin: 16px 0; }
+      .receipt-section-title { font-weight: 700; font-size: 14px; color: #ff4d6d; border-left: 3px solid #ff4d6d; padding-left: 10px; margin: 12px 0 10px; }
+      .receipt-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 12.5px; }
+      .receipt-label { color: #6b4e5a; font-weight: 500; }
+      .receipt-value { color: #2d2d2d; font-weight: 500; text-align: right; }
+      .food-receipt-item { display: inline-block; background: #ffe6eb; padding: 3px 10px; border-radius: 20px; margin: 3px 4px; font-size: 11px; color: #ff4d6d; }
+      .food-category-receipt { margin: 12px 0 6px; font-weight: 700; color: #a55c6e; font-size: 12px; }
+      .receipt-total { margin-top: 20px; padding-top: 12px; border-top: 2px dashed #ffb6c1; text-align: center; font-size: 11px; color: #9b6672; }
+      .receipt-footer { background: #2d2d2d; padding: 16px; text-align: center; color: #f5e6d3; }
+    </style>
+    </head>
+    <body>${receiptContent.outerHTML}</body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+}
+
+// Event listeners
+document.getElementById('closeReceiptBtn').addEventListener('click', closeReceipt);
+document.getElementById('printReceiptBtn').addEventListener('click', printReceipt);
+
+// Carousel auto-slide logic
+function initAutoCarousels() {
+  const containers = document.querySelectorAll('.carousel-container');
+  containers.forEach(container => {
+    const imgs = Array.from(container.querySelectorAll('.carousel-slide img'));
+    if (imgs.length === 0) return;
+    let currentIndex = 0, autoInterval = null, isActive = true;
+    const dotsWrap = document.createElement('div');
+    dotsWrap.style.cssText = 'position:absolute;bottom:12px;left:0;width:100%;display:flex;justify-content:center;gap:8px;z-index:10;pointer-events:none;';
+    imgs.forEach((_, i) => {
+      const dot = document.createElement('span');
+      dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${i===0?'#ffffff':'rgba(255,255,255,0.55)'};transition:0.2s;`;
+      dotsWrap.appendChild(dot);
+    });
+    container.appendChild(dotsWrap);
+    const dots = Array.from(dotsWrap.children);
+    function updateDots() { dots.forEach((d,idx)=> d.style.background = idx===currentIndex ? '#ffffff' : 'rgba(255,255,255,0.55)'); }
+    function showImage(index) { imgs[currentIndex].classList.remove('active'); currentIndex = (index+imgs.length)%imgs.length; imgs[currentIndex].classList.add('active'); updateDots(); }
+    function nextSlide() { showImage(currentIndex+1); }
+    function prevSlide() { showImage(currentIndex-1); }
+    function startAuto() { if(autoInterval) clearInterval(autoInterval); if(!isActive) return; autoInterval = setInterval(()=> nextSlide(), 3000); }
+    function stopAuto() { if(autoInterval) clearInterval(autoInterval); autoInterval=null; }
+    const prevBtn = container.querySelector('.prev'), nextBtn = container.querySelector('.next');
+    if(prevBtn) { const newPrev=prevBtn.cloneNode(true); prevBtn.parentNode.replaceChild(newPrev,prevBtn); newPrev.addEventListener('click',(e)=>{ e.stopPropagation(); stopAuto(); prevSlide(); startAuto(); }); }
+    if(nextBtn) { const newNext=nextBtn.cloneNode(true); nextBtn.parentNode.replaceChild(newNext,nextBtn); newNext.addEventListener('click',(e)=>{ e.stopPropagation(); stopAuto(); nextSlide(); startAuto(); }); }
+    const activeIdx = imgs.findIndex(img=>img.classList.contains('active'));
+    if(activeIdx!==-1) currentIndex=activeIdx; else imgs[0].classList.add('active');
+    updateDots();
+    container.addEventListener('mouseenter',stopAuto); container.addEventListener('mouseleave',startAuto);
+    startAuto();
+  });
+}
+window.addEventListener('DOMContentLoaded', () => {
+  const defaultDate = new Date(); defaultDate.setDate(defaultDate.getDate()+7);
+  const yyyy = defaultDate.getFullYear(), mm = String(defaultDate.getMonth()+1).padStart(2,'0'), dd = String(defaultDate.getDate()).padStart(2,'0');
+  const datePicker = document.getElementById('meetingDate');
+  if(datePicker) datePicker.value = `${yyyy}-${mm}-${dd}`;
+  initAutoCarousels();
+});
+</script>
+</body>
+</html>
